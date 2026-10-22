@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel de Gestão de Receita e ISS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --blue-primary: #122258;
+  --blue-accent: #1e3a8a;
+  --blue-light: #eff4fe;
+  --orange-primary: #f25c05;
+  --orange-hover: #d94e00;
+  --orange-light: #fff5ed;
+  --bg: #f4f6f9;
+  --card: #ffffff;
+  --line: #e2e8f0;
+  --ink: #0f172a;
+  --mut: #64748b;
+  --red: #dc2626;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px -2px rgba(18, 34, 88, 0.08);
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-padding-top: 80px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Topo / Header */
+.top {
+  background: linear-gradient(135deg, var(--blue-primary) 0%, #0d173b 100%);
+  color: #fff;
+  border-bottom: 5px solid var(--orange-primary);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.top .in {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 16px 40px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.brand {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.co {
+  font-size: 11px;
+  color: var(--orange-primary);
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.top h1 {
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: #ffffff;
+}
+.sign {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  font: 600 13px/1 "JetBrains Mono", monospace;
+  letter-spacing: .06em;
+  padding: 10px 16px;
+  border-radius: 30px;
+  border: 1px solid rgba(255,255,255,0.15);
+  white-space: nowrap;
+}
+.top .acts { display: flex; gap: 10px; }
+
+/* Estrutura Principal */
+main {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 28px 40px 64px;
+}
+h2 { margin: 0; font-size: 17px; font-weight: 700; color: var(--blue-primary); }
+.sub { margin: 3px 0 0; color: var(--mut); font-size: 13px; }
+
+/* Painéis / Cards */
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  margin-bottom: 22px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.step {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--orange-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+  box-shadow: 0 2px 8px rgba(242, 92, 5, 0.3);
+}
+
+/* Botões e Inputs */
+button, input, select { font: inherit; color: var(--ink); }
+.btn {
+  cursor: pointer;
+  border: none;
+  background: var(--orange-primary);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(242, 92, 5, 0.25);
+}
+.btn:hover { background: var(--orange-hover); transform: translateY(-1px); }
+.btn.ghost {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  box-shadow: none;
+}
+.btn.ghost:hover { background: rgba(255,255,255,0.2); }
+.btn.line { background: #fff; color: var(--blue-primary); border: 1px solid var(--line); box-shadow: none; }
+.btn.line:hover { background: var(--bg); }
+
+/* Áreas de Upload */
+#drop {
+  border: 2px dashed #cbd5e1;
+  border-radius: var(--radius);
+  padding: 28px;
+  text-align: center;
+  color: var(--mut);
+  background: #f8fafc;
+  transition: all 0.2s ease;
+}
+#drop.over { border-color: var(--orange-primary); background: var(--orange-light); }
+#msgs { margin-top: 12px; font-size: 13px; color: var(--mut); }
+#msgs b { color: var(--ink); }
+#msgs .warn { margin-top: 8px; color: #9a3412; background: #ffedd5; border-radius: 8px; padding: 8px 12px; font-weight: 500; }
+#msgs .ok { margin-top: 8px; color: #166534; background: #dcfce7; border-radius: 8px; padding: 8px 12px; font-weight: 500; }
+
+/* Controles de Entrada */
+.ctrl { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; }
+.ctrl label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--mut); font-weight: 600; }
+.ctrl input, .ctrl select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: #fff;
+  width: 160px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ctrl input:focus, .ctrl select:focus { border-color: var(--orange-primary); }
+.ctrl .pct { position: relative; }
+.ctrl .pct input { padding-right: 32px; }
+.ctrl .pct span { position: absolute; right: 12px; bottom: 10px; color: var(--mut); font-weight: 700; }
+.note { margin: 14px 0 0; color: var(--mut); font-size: 13px; }
+
+/* Cards KPI */
+.kpis { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+.kpi {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  border-left: 5px solid var(--blue-accent);
+  box-shadow: var(--shadow-sm);
+}
+.kpi small { display: block; color: var(--mut); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.kpi b { display: block; font-size: 22px; font-weight: 800; margin-top: 6px; color: var(--ink); }
+.kpi.a { border-left-color: #3b82f6; }
+.kpi.b { border-left-color: var(--blue-primary); }
+.kpi.d { border-left-color: var(--red); }
+.kpi.d b { color: var(--red); }
+
+.kpi.main {
+  background: linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-accent) 100%);
+  border: none;
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+.kpi.main small { color: #93c5fd; }
+.kpi.main b { font-size: 28px; color: #fff; }
+
+.split { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,0.2); margin: 14px 0 10px; }
+.split i { display: block; height: 100%; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: #e2e8f0; font-weight: 500; }
+.legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--c); }
+
+/* Tabelas */
+.wrap { overflow: auto; max-height: 560px; border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 780px; font-size: 13.5px; }
+th, td { padding: 11px 14px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+th { position: sticky; top: 0; background: #f8fafc; color: var(--blue-primary); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; z-index: 1; }
+tbody tr:hover { background: #f1f5f9; }
+td.dif { color: var(--red); font-weight: 700; }
+tfoot td { position: sticky; bottom: 0; background: var(--blue-primary); color: #fff; font-weight: 700; border: 0; }
+td input { width: 120px; text-align: right; padding: 6px 10px; border: 1px solid #fde047; background: #fef9c3; border-radius: 6px; font-weight: 600; color: #854d0e; }
+td input:focus { outline: 2px solid var(--orange-primary); }
+.empty { padding: 32px; text-align: center; color: var(--mut); }
+
+.chartbox { height: 320px; }
+.foot { color: var(--mut); font-size: 12px; text-align: center; margin-top: 16px; }
+
+details.panel summary { cursor: pointer; font-weight: 700; font-size: 15px; color: var(--blue-primary); }
+#theme .ctrl input[type=color] { width: 64px; height: 40px; padding: 2px; }
+#theme .ctrl input[type=file] { width: auto; padding: 6px; }
+
+@media(max-width: 900px){ .kpis { grid-template-columns: 1fr 1fr; } .kpi.main { grid-column: 1/-1; } }
+@media(max-width: 520px){ .kpis { grid-template-columns: 1fr; } .panel { padding: 16px; } main { padding: 16px 12px 40px; } }
+@media print {
+  body { background: #fff; }
+  .top .acts, #sec-up, .ctrl label.noprint, .wrap { max-height: none; }
+  .top .acts, #sec-up { display: none; }
+  .panel, .kpi { break-inside: avoid; }
+  .kpi.main, .top, tfoot td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="in">
+    <div class="brand">
+      <div>
+        <div class="co">Painel Financeiro</div>
+        <h1>Receita & Impostos (ISS)</h1>
+      </div>
+    </div>
+    <div class="sign" id="sign" aria-label="Período analisado">SEM DADOS</div>
+    <div class="acts">
+      <button class="btn ghost" id="csv" type="button">Baixar CSV</button>
+      <button class="btn ghost" id="print" type="button">Imprimir / PDF</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="panel" id="sec-up">
+  <div class="head">
+    <div class="step">1</div>
+    <div>
+      <h2>Carregar Arquivos (RDO, Subsídio e Análise)</h2>
+      <p class="sub">Selecione ou arraste os arquivos de uma vez (RDO, Subsídio e a planilha de Análise). O sistema lê os dados automaticamente sem enviar nada para fora do computador.</p>
+    </div>
+  </div>
+  <div id="drop">
+    Arraste os arquivos <b>.xls</b> ou <b>.xlsx</b> para cá ou 
+    <button class="btn" type="button" id="pick" style="margin-left:8px">Escolher Arquivos</button>
+    <input type="file" id="file" accept=".xls,.xlsx" multiple hidden>
+  </div>
+  <div id="msgs">Nenhum arquivo carregado ainda.</div>
+</section>
+
+<section class="panel">
+  <div class="head">
+    <div class="step">2</div>
+    <div>
+      <h2>Parâmetros e Alíquotas</h2>
+      <p class="sub">Defina as alíquotas de ISS para simular a diferença sobre a Receita Bruta (RDO + Subsídio).</p>
+    </div>
+  </div>
+  <div class="ctrl">
+    <label>Alíquota A<div class="pct"><input type="number" id="ra" value="0.01" step="0.01" min="0"><span>%</span></div></label>
+    <label>Alíquota B<div class="pct"><input type="number" id="rb" value="2.00" step="0.01" min="0"><span>%</span></div></label>
+    <label>Filtrar Ano<select id="ano"><option value="">Todos os anos</option></select></label>
+  </div>
+  <p class="note">Diferença = Imposto Apurado na Alíquota B (-) Imposto na Alíquota A.</p>
+</section>
+
+<div class="kpis" id="kpis"></div>
+
+<section class="panel">
+  <div class="head">
+    <div>
+      <h2>Evolução da Receita Mensal</h2>
+      <p class="sub" id="chartsub">Composição visual acumulada de RDO e Subsídio</p>
+    </div>
+  </div>
+  <div class="chartbox"><canvas id="chart"></canvas></div>
+</section>
+
+<section class="panel">
+  <div class="head">
+    <div>
+      <h2>Resumo Consolidado por Ano</h2>
+      <p class="sub">Acumulado anual dos valores apurados.</p>
+    </div>
+  </div>
+  <div class="wrap" style="max-height:none"><table id="years"></table></div>
+</section>
+
+<section class="panel">
+  <div class="head">
+    <div class="step">3</div>
+    <div>
+      <h2>Detalhamento Mensal</h2>
+      <p class="sub">Valores extraídos das planilhas. Caso precise, você pode ajustar o subsídio manualmente na coluna destacada.</p>
+    </div>
+  </div>
+  <div class="wrap"><table id="months"></table></div>
+</section>
+
+<details class="panel" id="theme">
+  <summary>Personalizar Marca e Cores</summary>
+  <div class="ctrl" style="margin-top:16px">
+    <label>Cor Principal (Azul)<input type="color" id="c1" value="#122258"></label>
+    <label>Cor Destaque (Laranja)<input type="color" id="c2" value="#f25c05"></label>
+    <button class="btn line" id="reset" type="button">Restaurar Padrão</button>
+  </div>
+</details>
+
+<p class="foot" id="foot">Sistema de Gestão Financeira | Receita e ISS.</p>
+</main>
+
+<script src="script.js" defer></script>
+</body>
+</html>
